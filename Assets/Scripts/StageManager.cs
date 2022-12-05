@@ -6,31 +6,37 @@ namespace Katniss
 {
     public class StageManager : MonoBehaviour
     {
-        private int friendCount = 1;
+        [SerializeField] private static int stageFriendCount = 26;
+        private int joinCount = 1;
+        private int finishCount = 0;
 
-        [SerializeField] private GameManager gameManager;
+        [SerializeField] private Friend[] friends = new Friend[stageFriendCount];
 
         void Start()
         {
-            gameManager.joinEvent += new FriendEventHandler(GetNewFriend);
-            gameManager.outEvent += new FriendEventHandler(LoseFriend);
+            foreach(Friend friend in friends)
+            {
+                if (friend == null) return;
+
+                friend.joinEvent += new FriendEventHandler(GetNewFriend);
+                friend.outEvent += new FriendEventHandler(LoseFriend);
+            }
         }
 
-        void Update()
+        void GetNewFriend()
         {
-            
+            joinCount++;
         }
 
-        private void GetNewFriend()
+        void LoseFriend()
         {
-            friendCount++;
-            Debug.Log(friendCount);
+            joinCount--;
+            Debug.Log(joinCount);
         }
 
-        private void LoseFriend()
+        void CountFinish()
         {
-            friendCount--;
-            Debug.Log(friendCount);
+            finishCount++;
         }
     }
 }
