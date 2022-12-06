@@ -6,6 +6,8 @@ public class RunningManager : MonoBehaviour
 {
     // need to be modified
 
+    public bool isOnLeftEdge;
+    public bool isOnRightEdge;
     public float posX;
 
     void Update()
