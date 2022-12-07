@@ -14,59 +14,78 @@ namespace Katniss
     public class Friend : MonoBehaviour
     {
         [SerializeField] private bool isPlayer;
-        [SerializeField] private bool isJoining;
+        public bool isJoining;
         private bool isRunning;
+        private bool is2Boss = false;
+
         private int layerGround;
         private int layerJoin;
+        private int layerDisjoin;
         private int layerEnemy;
         private int layerBlock;
+        private int layerFinishLine;
         //private float posX;
         private float deltaX;
         private float angle;
-        [SerializeField] private const float xSpeed = 0.00001f;
-        [SerializeField] private const float ySpeed = 20f;
-        [SerializeField] private const float angleSpeed = 1f;
+        [SerializeField] private const float xSpeed = 0.0001f;
+        [SerializeField] private const float ySpeed = 25f;
+        [SerializeField] private const float angleSpeed = 2f;
 
         private Vector3 dir;
         [SerializeField] private GameObject rig;
         [SerializeField] private Animator animator;
         [SerializeField] private Rigidbody body;
+        [SerializeField] private CapsuleCollider capsuleCollider;
         [SerializeField] private SkinnedMeshRenderer headMeshRenderer;
         [SerializeField] private SkinnedMeshRenderer bodyMeshRenderer;
         [SerializeField] private Material material;
         [SerializeField] private ParticleSystem particle;
         [SerializeField] private RunningManager runningManager;         // need to be modified
+        [SerializeField] private Enemy bossEnemy;
 
         public event FriendEventHandler joinEvent;
         public event FriendEventHandler outEvent;
+        public event FriendEventHandler enemyEvent;
 
         void Start()
         {
             layerGround = LayerMask.NameToLayer("Ground");
             layerJoin = LayerMask.NameToLayer("Join");
+            layerDisjoin = LayerMask.NameToLayer("Disjoin");
             layerEnemy = LayerMask.NameToLayer("Enemy");
             layerBlock = LayerMask.NameToLayer("Block");
+            layerFinishLine = LayerMask.NameToLayer("FinishLine");
         }
 
         void Update()
         {
-            if (isJoining == true)
+            if (isJoining == false)
+                return;
+
+            if (runningManager.isStageEnded)
             {
-                if (Input.GetMouseButtonDown(0))
+                if (is2Boss == false)
                 {
-                    StartRunning();
-                    return;
+                    StartCoroutine(FinishLine());
+                    is2Boss = true;
                 }
-                if (Input.GetMouseButton(0))
-                {
-                    Run();
-                    return;
-                }
-                if (Input.GetMouseButtonUp(0))
-                {
-                    FinishRunning();
-                    return;
-                }
+                return;
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                StartRunning();
+                return;
+            }
+            if (Input.GetMouseButton(0))
+            {
+                Run();
+                return;
+            }
+            if (Input.GetMouseButtonUp(0))
+            {
+                FinishRunning();
+                return;
             }
 
             if (isRunning == false && rig.transform.rotation != transform.rotation)
@@ -77,13 +96,14 @@ namespace Katniss
         {
             if (other.gameObject.layer == layerGround)
             {
+                Debug.Log("ground");
                 if (this.transform.position.x < 0)
                     runningManager.isOnLeftEdge = true;
                 else
                     runningManager.isOnRightEdge = true;
             }
 
-            if (other.gameObject.layer == layerJoin && isJoining == false)
+            if (other.gameObject.layer == layerJoin && isJoining == false &&this.gameObject.layer==layerDisjoin)
             {
                 Join();
                 if (Input.GetMouseButtonDown(0) || Input.GetMouseButton(0))
@@ -96,13 +116,26 @@ namespace Katniss
                 StartCoroutine(OutByBlock());
 
                 Out();
+
+                return;
             }
 
             else if (other.gameObject.layer == layerEnemy)
             {
-                Out();
+                Debug.Log("enemy");
                 other.gameObject.GetComponent<Collider>().enabled = false;
-                StartCoroutine(OutByEnemy(other.gameObject));
+                
+                enemyEvent();
+
+                return;
+            }
+
+            else if (other.gameObject.layer == layerFinishLine)
+            {
+                Debug.Log("finish");
+                other.gameObject.GetComponent<Collider>().enabled = false;
+
+                FinishStage();
             }
         }
 
@@ -139,7 +172,7 @@ namespace Katniss
             dir = new Vector3(deltaX / Time.deltaTime * xSpeed, 0, 1);
 
             angle = Mathf.Atan2(deltaX, 0) * Mathf.Rad2Deg;
-            rig.transform.rotation = Quaternion.Lerp(rig.transform.rotation, Quaternion.Euler(0.0f, angle, 0.0f), angleSpeed * Time.deltaTime);
+            rig.transform.rotation = Quaternion.Lerp(rig.transform.rotation, Quaternion.Euler(0.0f, angle/2, 0.0f), angleSpeed * Time.deltaTime);
 
             transform.Translate(dir * ySpeed * Time.deltaTime, Space.World);
         }
@@ -172,7 +205,13 @@ namespace Katniss
 
         void FinishStage()
         {
+            runningManager.isStageEnded = true;
+        }
 
+        public void run2Enemy(Enemy enemy)
+        {
+            Out();
+            StartCoroutine(OutByEnemy(enemy));
         }
 
         IEnumerator OutByBlock()
@@ -184,25 +223,88 @@ namespace Katniss
             else FinishRunning();
 
             particle.Play();
-
-            //yield return new WaitForSeconds(0.2f);
-
             rig.SetActive(false);
 
             yield return null;
         }
 
-        IEnumerator OutByEnemy(GameObject gameObject)
+        IEnumerator OutByEnemy(Enemy enemy)
         {
-            isRunning = false;
-            //animator.SetBool("isOutByEnemy", true);
-
             var pos = transform.position;
-            var targetPos = gameObject.transform.position;
+            var targetPos = enemy.pos;
 
-            for (int i = 0; i < 100; i++)
+            Vector3 enemyPos;
+            Vector3 myPos;
+
+            enemy.Run();
+            animator.speed = 3.0f;
+
+            for (int i = 0; i < 240; i++)
             {
-                transform.position = Vector3.Lerp(pos, targetPos, i / 200f);
+                enemy.gameObject.transform.position = Vector3.Lerp(targetPos, pos, i / 360f);
+                transform.position = Vector3.Lerp(pos, targetPos, i / 240f);
+
+                if (rig.transform.rotation != transform.rotation)
+                    rig.transform.rotation = Quaternion.Lerp(rig.transform.rotation, transform.rotation, angleSpeed * Time.deltaTime);
+
+                enemyPos = enemy.gameObject.transform.position;
+                myPos = transform.position;
+                if ((enemyPos - myPos).magnitude < 0.5f)
+                {
+                    isRunning = false;
+
+                    animator.SetTrigger("Die");
+                    enemy.Die();
+                    break;
+                }
+
+                yield return null;
+            }
+        }
+
+        IEnumerator FinishLine()
+        {
+            var pos = transform.position;
+            var targetPos = bossEnemy.pos;
+            targetPos.x = (pos.x + targetPos.x) / 2f;
+
+            Vector3 myPos;
+
+            for (int i = 0; i < 180; i++)
+            {
+                transform.position = Vector3.Lerp(pos, targetPos, i / 180f);
+
+                myPos = transform.position;
+                if ((targetPos - myPos).magnitude < 15)
+                {
+                    runningManager.isEncounterBoss = true;
+                }
+
+                if (runningManager.isEncounterBoss)
+                {
+                    this.body.isKinematic = false;
+                    this.capsuleCollider.radius = 1.2f;
+                    this.capsuleCollider.isTrigger = false;
+                    animator.SetBool("isRunning", false);
+                    break;
+                }
+
+                yield return null;
+            }
+
+            StartCoroutine(AttackBoss());
+        }
+
+        IEnumerator AttackBoss()
+        {
+            var pos = transform.position;
+            var targetPos = bossEnemy.pos;
+
+            for (int i = 0; i < 100000; i++)
+            {
+                pos = transform.position;
+                targetPos = bossEnemy.gameObject.transform.position;
+                body.AddForce(targetPos - pos);
 
                 yield return null;
             }

@@ -7,15 +7,18 @@ namespace Katniss
     public class StageManager : MonoBehaviour
     {
         public bool isStart = false;
+        private bool isEncounterEnemy = false;
+
         [SerializeField] private static int stageFriendCount = 26;
+        [SerializeField] private static int stageEnemyCount = 7;
         private int joinCount = 1;
-        private int finishCount = 0;
         private float fov = 50f;
 
         private Vector3 camVec = new Vector3(0, 25, -40);
         [SerializeField] private Camera cam;
         [SerializeField] private Canvas canvas;
         [SerializeField] private Friend[] friends = new Friend[stageFriendCount];
+        [SerializeField] private Enemy[] enemies = new Enemy[stageEnemyCount];
 
         void Start()
         {
@@ -25,6 +28,7 @@ namespace Katniss
 
                 friend.joinEvent += new FriendEventHandler(GetNewFriend);
                 friend.outEvent += new FriendEventHandler(LoseFriend);
+                friend.enemyEvent += new FriendEventHandler(DefenceEnemy);
             }
         }
 
@@ -48,9 +52,9 @@ namespace Katniss
             Debug.Log(joinCount);
         }
 
-        void CountFinish()
+        void DefenceEnemy()
         {
-            finishCount++;
+            StartCoroutine(assignFriends());
         }
 
         void CameraChange()
@@ -68,7 +72,7 @@ namespace Katniss
 
             var rot = Quaternion.Euler(22f, 0f, 0f);
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 1; i < 101; i++)
             {
                 cam.transform.localPosition = Vector3.Lerp(camPos, camVec, i / 100f);
                 cam.transform.localRotation = Quaternion.Lerp(camRot, rot, i / 100f);
@@ -76,6 +80,23 @@ namespace Katniss
                 yield return null;
             }
             yield return null;
+        }
+
+        IEnumerator assignFriends()
+        {
+            int i = 0;
+            for (int j = stageFriendCount - 1; j >= 0; j--)
+            {
+                if (friends[j] != null && friends[j].isJoining == true)
+                {
+                    friends[j].run2Enemy(enemies[i]);
+                    
+                    i++;
+                    if (i >= stageEnemyCount) break;
+                }
+
+                yield return new WaitForSeconds(0.1f);
+            }
         }
     }
 }

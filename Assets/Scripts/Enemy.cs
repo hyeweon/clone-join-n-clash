@@ -6,16 +6,29 @@ namespace Katniss
 {
     public class Enemy : MonoBehaviour
     {
-        // Start is called before the first frame update
+        [SerializeField] private bool isBoss = false;
+
+        public Vector3 pos;
+        [SerializeField] private Animator animator;
+
         void Start()
         {
-
+            pos = transform.position;
         }
 
-        // Update is called once per frame
-        void Update()
+        public void Run()
         {
+            animator.SetBool("isRunning", true);
+        }
 
+        public void Die()
+        {
+            animator.SetTrigger("Die");
+        }
+
+        public void ActivateBoss()
+        {
+            animator.SetBool("isBossActivate", true);
         }
     }
 }

@@ -2,19 +2,35 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RunningManager : MonoBehaviour
+namespace Katniss
 {
-    // need to be modified
 
-    public bool isOnLeftEdge;
-    public bool isOnRightEdge;
-    public float posX;
-
-    void Update()
+    public class RunningManager : MonoBehaviour
     {
-        if (Input.GetMouseButtonDown(0))
+        // need to be modified
+
+        public bool isStageEnded = false;
+        public bool isOnLeftEdge;
+        public bool isOnRightEdge;
+        public float posX;
+
+        public bool isEncounterBoss = false;
+        public bool isBossActivate = false;
+
+        public Enemy boss;
+
+        void Update()
         {
-            posX = Input.mousePosition.x;
+            if (Input.GetMouseButtonDown(0))
+            {
+                posX = Input.mousePosition.x;
+            }
+
+            if (isEncounterBoss == true && isBossActivate == false)
+            {
+                isBossActivate = true;
+                boss.ActivateBoss();
+            }
         }
     }
 }

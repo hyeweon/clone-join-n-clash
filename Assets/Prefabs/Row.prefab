@@ -142,6 +142,11 @@ PrefabInstance:
       propertyPath: runningManager
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 1728663895642759449, guid: 248255e3407a67740971292f9cb44102,
+        type: 3}
+      propertyPath: m_Drag
+      value: 30
+      objectReference: {fileID: 0}
     - target: {fileID: 3354645049580256092, guid: 248255e3407a67740971292f9cb44102,
         type: 3}
       propertyPath: m_RootOrder
