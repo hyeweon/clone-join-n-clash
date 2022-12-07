@@ -230,6 +230,8 @@ namespace Katniss
 
         IEnumerator OutByEnemy(Enemy enemy)
         {
+            var enemyRunTime = 2f;
+
             var pos = transform.position;
             var targetPos = enemy.pos;
 
@@ -239,10 +241,10 @@ namespace Katniss
             enemy.Run();
             animator.speed = 3.0f;
 
-            for (int i = 0; i < 240; i++)
+            for (var time = 0f; time < enemyRunTime; time += Time.deltaTime)
             {
-                enemy.gameObject.transform.position = Vector3.Lerp(targetPos, pos, i / 360f);
-                transform.position = Vector3.Lerp(pos, targetPos, i / 240f);
+                enemy.gameObject.transform.position = Vector3.Lerp(targetPos, pos, time / 3f);
+                transform.position = Vector3.Lerp(pos, targetPos, time / 2f);
 
                 if (rig.transform.rotation != transform.rotation)
                     rig.transform.rotation = Quaternion.Lerp(rig.transform.rotation, transform.rotation, angleSpeed * Time.deltaTime);
@@ -264,15 +266,17 @@ namespace Katniss
 
         IEnumerator FinishLine()
         {
+            var finishingTime = 3f;
+
             var pos = transform.position;
             var targetPos = bossEnemy.pos;
             targetPos.x = (pos.x + targetPos.x) / 2f;
 
             Vector3 myPos;
 
-            for (int i = 0; i < 180; i++)
+            for (var time = 0f; time < finishingTime; time += Time.deltaTime)
             {
-                transform.position = Vector3.Lerp(pos, targetPos, i / 180f);
+                transform.position = Vector3.Lerp(pos, targetPos, time);
 
                 myPos = transform.position;
                 if ((targetPos - myPos).magnitude < 15)
@@ -288,7 +292,6 @@ namespace Katniss
                     animator.SetBool("isRunning", false);
                     break;
                 }
-
                 yield return null;
             }
 
@@ -297,10 +300,12 @@ namespace Katniss
 
         IEnumerator AttackBoss()
         {
+            var attackTime = 30f;
+
             var pos = transform.position;
             var targetPos = bossEnemy.pos;
 
-            for (int i = 0; i < 100000; i++)
+            for (var time = 0f; time < attackTime; time += Time.deltaTime)
             {
                 pos = transform.position;
                 targetPos = bossEnemy.gameObject.transform.position;
