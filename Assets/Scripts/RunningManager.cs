@@ -17,6 +17,8 @@ namespace Katniss
         public bool isEncounterBoss = false;
         public bool isBossActivate = false;
 
+        public Vector3 screenPos;
+        public Vector3 bossPos;
         public Enemy boss;
 
         void Update()

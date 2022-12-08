@@ -27,9 +27,9 @@ namespace Katniss
         //private float posX;
         private float deltaX;
         private float angle;
-        [SerializeField] private const float xSpeed = 0.0001f;
-        [SerializeField] private const float ySpeed = 25f;
-        [SerializeField] private const float angleSpeed = 2f;
+        [SerializeField] private const float xSpeed = 0.1f;
+        [SerializeField] private float ySpeed = 25f;
+        [SerializeField] private float angleSpeed = 2f;
 
         private Vector3 dir;
         [SerializeField] private GameObject rig;
@@ -46,6 +46,7 @@ namespace Katniss
         public event FriendEventHandler joinEvent;
         public event FriendEventHandler outEvent;
         public event FriendEventHandler enemyEvent;
+        public event FriendEventHandler finalEvent;
 
         void Start()
         {
@@ -153,6 +154,7 @@ namespace Katniss
         void StartRunning()
         {
             isRunning = true;
+            animator.SetFloat("Offset", Random.Range(0f, 1f));
             animator.SetBool("isRunning", isRunning);
 
             //posX = Input.mousePosition.x;
@@ -160,7 +162,7 @@ namespace Katniss
 
         void Run()
         {
-            deltaX = Input.mousePosition.x - runningManager.posX;
+            deltaX = (Input.mousePosition.x - runningManager.posX) / Screen.width;
             if (runningManager.isOnLeftEdge == true)
             {
                 if (deltaX < 0) deltaX = 0;
@@ -169,7 +171,7 @@ namespace Katniss
             {
                 if (deltaX > 0) deltaX = 0;
             }
-            dir = new Vector3(deltaX / Time.deltaTime * xSpeed, 0, 1);
+            dir = new Vector3((deltaX * xSpeed) / Time.deltaTime, 0, 1);
 
             angle = Mathf.Atan2(deltaX, 0) * Mathf.Rad2Deg;
             rig.transform.rotation = Quaternion.Lerp(rig.transform.rotation, Quaternion.Euler(0.0f, angle/2, 0.0f), angleSpeed * Time.deltaTime);
@@ -251,7 +253,7 @@ namespace Katniss
 
                 enemyPos = enemy.gameObject.transform.position;
                 myPos = transform.position;
-                if ((enemyPos - myPos).magnitude < 0.5f)
+                if ((enemyPos - myPos).magnitude < 0.2f)
                 {
                     isRunning = false;
 
@@ -266,7 +268,7 @@ namespace Katniss
 
         IEnumerator FinishLine()
         {
-            var finishingTime = 3f;
+            var finishingTime = 2f;
 
             var pos = transform.position;
             var targetPos = bossEnemy.pos;
@@ -282,6 +284,7 @@ namespace Katniss
                 if ((targetPos - myPos).magnitude < 15)
                 {
                     runningManager.isEncounterBoss = true;
+                    finalEvent();
                 }
 
                 if (runningManager.isEncounterBoss)
@@ -289,7 +292,8 @@ namespace Katniss
                     this.body.isKinematic = false;
                     this.capsuleCollider.radius = 1.2f;
                     this.capsuleCollider.isTrigger = false;
-                    animator.SetBool("isRunning", false);
+                    animator.SetFloat("Offset", Random.Range(0f, 1f));
+                    animator.SetBool("isFighting", true);
                     break;
                 }
                 yield return null;

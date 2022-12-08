@@ -14,19 +14,30 @@ namespace Katniss
         [SerializeField] private static int stageFriendCount = 26;
         [SerializeField] private static int stageEnemyCount = 7;
         private int joinCount = 1;
-        private const int defaultBossHp = 30;
-        private int bossHp = defaultBossHp;
+        private const float defaultBossHp = 30f;
+        private int bossHp = (int)defaultBossHp;
+        private const float defaultStageTime = 10f;
+        private float stageTime = 0;
         private float fov = 50f;
 
         private Vector3 camVec = new Vector3(0, 25, -40);
         [SerializeField] private Camera cam;
         [SerializeField] private Canvas canvas;
         [SerializeField] private Canvas canvas2;
+        [SerializeField] private Canvas playUI;
+        [SerializeField] private GameObject hpBar;
+        [SerializeField] private RectTransform rectTrans;
         [SerializeField] private Image hpFrame;
         [SerializeField] private Image hpFill;
+        [SerializeField] private Image progressFill;
         [SerializeField] private TextMeshProUGUI tmp;
         [SerializeField] private Friend[] friends = new Friend[stageFriendCount];
         [SerializeField] private Enemy[] enemies = new Enemy[stageEnemyCount];
+
+        public bool isHpShows = false;
+        public Vector3 screenPos;
+        public Vector3 bossPos;
+        public GameObject boss;
 
         void Start()
         {
@@ -37,11 +48,18 @@ namespace Katniss
                 friend.joinEvent += new FriendEventHandler(GetNewFriend);
                 friend.outEvent += new FriendEventHandler(LoseFriend);
                 friend.enemyEvent += new FriendEventHandler(DefenceEnemy);
+                friend.finalEvent += new FriendEventHandler(AttackBoss);
             }
         }
 
         private void Update()
         {
+            if (isStart == true)
+            {
+                progressFill.fillAmount = stageTime / defaultStageTime;
+                stageTime += Time.deltaTime;
+            }
+
             if (isStart == false && Input.GetMouseButtonDown(0))
             {
                 CameraChange();
@@ -68,8 +86,15 @@ namespace Katniss
         void CameraChange()
         {
             isStart = true;
+            playUI.enabled = true;
             canvas.enabled = false;
             StartCoroutine(CameraMove());
+        }
+
+        void AttackBoss()
+        {
+            Debug.Log("attackBoss");
+            StartCoroutine(Fight());
         }
 
         void BossDie()
@@ -123,12 +148,13 @@ namespace Katniss
 
         IEnumerator Fight()
         {
-            for (var time = 0f; bossHp <= 0; time += Time.deltaTime)
+            for (var time = 0f; bossHp > 0; time += Time.deltaTime)
             {
-                if (time > 1f)
+                if (time > 0.5f)
                 {
                     bossHp--;
                     ChangeHpBar();
+                    time -= 0.5f;
                 }
                 yield return null;
             }
