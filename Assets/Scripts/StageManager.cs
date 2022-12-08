@@ -40,6 +40,8 @@ namespace Katniss
         public Vector3 bossPos;
         public GameObject boss;
         public Enemy bossEnemy;
+        public ParticleSystem particle;
+        public ParticleSystem bloodParticle;
 
         void Start()
         {
@@ -207,6 +209,10 @@ namespace Katniss
 
                 yield return null;
             }
+
+            bloodParticle.Play();
+            particle.Play();
+            boss.SetActive(false);
         }
     }
 }

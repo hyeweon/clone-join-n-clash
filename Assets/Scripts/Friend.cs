@@ -2,11 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// join layer ???? ????
-// enemy layer ??????
-// animator isOut ??????
-// player?? rigidbody iskinematic ????
-
 namespace Katniss
 {
     public delegate void FriendEventHandler();
