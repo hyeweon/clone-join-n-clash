@@ -13,11 +13,13 @@ namespace Katniss
         public Vector3 pos;
         private Vector3 screenCenter;
         private Vector3 targetPos;
-        [SerializeField] private Animator animator;
+        public Animator animator;
         [SerializeField] private Camera cam;
         private Ray cameraRay;
         private RaycastHit cameraHit;
         private int groundLayerMask;
+
+        public StageManager stageManager;
 
         void Start()
         {
@@ -41,32 +43,36 @@ namespace Katniss
 
         public void ActivateBoss()
         {
+            StartCoroutine(MoveBoss2Friends());
+        }
+
+        IEnumerator MoveBoss2Friends()
+        {
+            animator.SetBool("isRunning", true);
+
+            for (float time = 0f; time < 2f; time += Time.deltaTime)
+            {
+                transform.position = Vector3.Lerp(pos, targetPos, time/2f);
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(0.5f);
             StartCoroutine(MoveBoss());
         }
 
         IEnumerator MoveBoss()
         {
-            for (float time = 0f; time < 3f; time += Time.deltaTime)
-            {
-                Debug.Log("check");
-                transform.position = Vector3.Lerp(pos, targetPos, time / 3f);
+            animator.SetBool("isFighting", true);
 
-                yield return null;
-            }
-
-            yield return new WaitForSeconds(0.5f);
-
-            for (float time = 0f; time < 3f; time += Time.deltaTime)
+            for (float time = 0f; time < 5f; time += Time.deltaTime)
             {
                 cameraRay = Camera.main.ScreenPointToRay(screenCenter);
 
                 if (Physics.Raycast(cameraRay, out cameraHit, Mathf.Infinity, groundLayerMask))
                 {
-                    Debug.Log("check2");
                     pos = transform.position;
                     targetPos = cameraHit.point;
-                    targetPos.y = pos.y;
-                    transform.position = Vector3.Lerp(pos, targetPos, time / 3f);
+                    transform.position = Vector3.Lerp(pos, targetPos, time / 5f);
                 }
 
                 yield return null;

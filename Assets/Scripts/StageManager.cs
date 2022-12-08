@@ -15,7 +15,7 @@ namespace Katniss
         [SerializeField] private static int stageEnemyCount = 7;
         private int joinCount = 1;
         private const float defaultBossHp = 30f;
-        private int bossHp = (int)defaultBossHp;
+        public int bossHp = (int)defaultBossHp;
         private const float defaultStageTime = 10f;
         private float stageTime = 0;
         private float fov = 50f;
@@ -31,6 +31,7 @@ namespace Katniss
         [SerializeField] private Image hpFill;
         [SerializeField] private Image progressFill;
         [SerializeField] private TextMeshProUGUI tmp;
+
         [SerializeField] private Friend[] friends = new Friend[stageFriendCount];
         [SerializeField] private Enemy[] enemies = new Enemy[stageEnemyCount];
 
@@ -38,9 +39,12 @@ namespace Katniss
         public Vector3 screenPos;
         public Vector3 bossPos;
         public GameObject boss;
+        public Enemy bossEnemy;
 
         void Start()
         {
+            playUI.enabled = false;
+
             foreach(Friend friend in friends)
             {
                 if (friend == null) return;
@@ -94,12 +98,13 @@ namespace Katniss
         void AttackBoss()
         {
             Debug.Log("attackBoss");
+            StartCoroutine(FinalCameraMove());
             StartCoroutine(Fight());
         }
 
         void BossDie()
         {
-            //ani
+            bossEnemy.animator.SetTrigger("Die");
             StartCoroutine(FadeOutUI());
         }
 
@@ -129,6 +134,21 @@ namespace Katniss
             yield return null;
         }
 
+        IEnumerator FinalCameraMove()
+        {
+            const float movingTime = 1f;
+
+            var camRot = cam.transform.localRotation;
+
+            var rot = Quaternion.Euler(35f, 0f, 0f);
+
+            for (var time = 0f; time < movingTime; time += Time.deltaTime)
+            {
+                cam.transform.localRotation = Quaternion.Lerp(camRot, rot, time / movingTime);
+                yield return null;
+            }
+        }
+
         IEnumerator assignFriends()
         {
             int i = 0;
@@ -148,6 +168,8 @@ namespace Katniss
 
         IEnumerator Fight()
         {
+            int i;
+
             for (var time = 0f; bossHp > 0; time += Time.deltaTime)
             {
                 if (time > 0.5f)
@@ -155,6 +177,17 @@ namespace Katniss
                     bossHp--;
                     ChangeHpBar();
                     time -= 0.5f;
+
+                    for(int j = 0; j < 3; j++)
+                    {
+                        i = Random.Range(0, maxExclusive: stageFriendCount);
+                        if (friends[i] != null && friends[i].isJoining == true)
+                        {
+                            StartCoroutine(friends[i].OutByBlock());
+                            friends[i].Out();
+                        }
+                        yield return new WaitForSeconds(Random.Range(0f, 0.5f));
+                    }
                 }
                 yield return null;
             }
@@ -162,7 +195,7 @@ namespace Katniss
             BossDie();
         }
 
-        IEnumerator FadeOutUI()
+        public IEnumerator FadeOutUI()
         {
             var hpFillColor = hpFill.color;
             var hpFillAlpha = hpFillColor.a;

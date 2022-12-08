@@ -42,6 +42,7 @@ namespace Katniss
         [SerializeField] private ParticleSystem particle;
         [SerializeField] private RunningManager runningManager;         // need to be modified
         [SerializeField] private Enemy bossEnemy;
+        [SerializeField] private GameObject bossEnemyRig;
 
         public event FriendEventHandler joinEvent;
         public event FriendEventHandler outEvent;
@@ -197,7 +198,7 @@ namespace Katniss
             bodyMeshRenderer.material = material;
         }
 
-        void Out()
+        public void Out()
         {
             outEvent();
 
@@ -216,15 +217,14 @@ namespace Katniss
             StartCoroutine(OutByEnemy(enemy));
         }
 
-        IEnumerator OutByBlock()
+        public IEnumerator OutByBlock()
         {
-            if (isPlayer == true) {
-                isRunning = false;
-                animator.SetBool("isRunning", isRunning);
-            }
-            else FinishRunning();
+            FinishRunning();
 
+            particle.transform.Translate(transform.up * Random.Range(0f, 1f) * 0.001f, Space.World);
             particle.Play();
+            capsuleCollider.isTrigger = true;
+            body.isKinematic = true;
             rig.SetActive(false);
 
             yield return null;
@@ -311,8 +311,12 @@ namespace Katniss
 
             for (var time = 0f; time < attackTime; time += Time.deltaTime)
             {
+                if (isJoining == false)
+                {
+                    break;
+                }
                 pos = transform.position;
-                targetPos = bossEnemy.gameObject.transform.position;
+                targetPos = bossEnemyRig.transform.position;
                 body.AddForce(targetPos - pos);
 
                 yield return null;
