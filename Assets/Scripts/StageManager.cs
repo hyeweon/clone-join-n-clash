@@ -9,7 +9,7 @@ namespace Katniss
     public class StageManager : MonoBehaviour
     {
         public bool isStart = false;
-        private bool isEncounterEnemy = false;
+        public bool isBossDie = false;
 
         [SerializeField] private static int stageFriendCount = 26;
         [SerializeField] private static int stageEnemyCount = 7;
@@ -25,11 +25,14 @@ namespace Katniss
         [SerializeField] private Canvas canvas;
         [SerializeField] private Canvas canvas2;
         [SerializeField] private Canvas playUI;
+        [SerializeField] private Canvas stageClearUI;
         [SerializeField] private GameObject hpBar;
         [SerializeField] private RectTransform rectTrans;
         [SerializeField] private Image hpFrame;
         [SerializeField] private Image hpFill;
         [SerializeField] private Image progressFill;
+        [SerializeField] private Image hammerFill;
+        [SerializeField] private Image button;
         [SerializeField] private TextMeshProUGUI tmp;
 
         [SerializeField] private Friend[] friends = new Friend[stageFriendCount];
@@ -46,8 +49,9 @@ namespace Katniss
         void Start()
         {
             playUI.enabled = false;
+            stageClearUI.enabled = false;
 
-            foreach(Friend friend in friends)
+            foreach (Friend friend in friends)
             {
                 if (friend == null) return;
 
@@ -106,7 +110,7 @@ namespace Katniss
 
         void BossDie()
         {
-            bossEnemy.animator.SetTrigger("Die");
+            bossEnemy.Die();
             StartCoroutine(FadeOutUI());
         }
 
@@ -126,6 +130,8 @@ namespace Katniss
 
             var rot = Quaternion.Euler(22f, 0f, 0f);
 
+            playUI.enabled = false;
+
             for (var time = 0f; time < movingTime; time += Time.deltaTime)
             {
                 cam.transform.localPosition = Vector3.Lerp(camPos, camVec, time / movingTime);
@@ -138,7 +144,7 @@ namespace Katniss
 
         IEnumerator FinalCameraMove()
         {
-            const float movingTime = 1f;
+            const float movingTime = 2f;
 
             var camRot = cam.transform.localRotation;
 
@@ -164,55 +170,78 @@ namespace Katniss
                     if (i >= stageEnemyCount) break;
                 }
 
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSeconds(0.3f);
             }
         }
 
         IEnumerator Fight()
         {
             int i;
+            var randomTime = Random.Range(1f, 5f);
 
-            for (var time = 0f; bossHp > 0; time += Time.deltaTime)
+            for (var time = 0f; bossHp > 0 && isBossDie == false; time += Time.deltaTime)
             {
-                if (time > 0.5f)
+                if (time > randomTime)
                 {
                     bossHp--;
                     ChangeHpBar();
-                    time -= 0.5f;
+                    time = 0;
 
-                    for(int j = 0; j < 3; j++)
+                    i = Random.Range(0, maxExclusive: stageFriendCount);
+                    if (friends[i] != null && friends[i].isJoining == true && Random.Range(0, maxExclusive: 2) == 0)
                     {
-                        i = Random.Range(0, maxExclusive: stageFriendCount);
-                        if (friends[i] != null && friends[i].isJoining == true)
-                        {
-                            StartCoroutine(friends[i].OutByBlock());
-                            friends[i].Out();
-                        }
-                        yield return new WaitForSeconds(Random.Range(0f, 0.5f));
+                        StartCoroutine(friends[i].OutByBlock());
+                        friends[i].Out();
                     }
                 }
+
+                randomTime = Random.Range(1f, 5f);
                 yield return null;
             }
 
+            
+            isBossDie = true;
             BossDie();
         }
 
         public IEnumerator FadeOutUI()
         {
-            var hpFillColor = hpFill.color;
-            var hpFillAlpha = hpFillColor.a;
+            particle.Play();
+            bloodParticle.Play();
 
-            for (var time = 0f; hpFillColor.a <= 0; time += Time.deltaTime)
+            var color = hpFrame.color;
+
+            for (var time = 0.5f; time >= 0; time -= Time.deltaTime)
             {
-                hpFillColor.a = Mathf.Lerp(hpFillAlpha, 0f, time);
-                hpFill.color = hpFillColor;
+                color.a = time*2;
+                tmp.alpha = time * 2;
+                hpFrame.color = color;
 
                 yield return null;
             }
+            yield return new WaitForSeconds(0.1f);
 
-            bloodParticle.Play();
-            particle.Play();
             boss.SetActive(false);
+            yield return new WaitForSeconds(1f);
+
+            stageClearUI.enabled = true;
+            StartCoroutine(FillUpHammer());
+        }
+
+        public IEnumerator FillUpHammer()
+        {
+            hammerFill.fillAmount = 0;
+
+            for (float i = 0f; i <= 5.0f; i += Time.deltaTime)
+            {
+                hammerFill.fillAmount = i / 4.0f;
+                i += Time.deltaTime;
+
+                if (hammerFill.fillAmount >= 1.0f)
+                    button.enabled = true;
+            }
+
+            yield return null;
         }
     }
 }

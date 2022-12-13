@@ -170,7 +170,7 @@ namespace Katniss
             dir = new Vector3((deltaX * xSpeed) / Time.deltaTime, 0, 1);
 
             angle = Mathf.Atan2(deltaX, 0) * Mathf.Rad2Deg;
-            rig.transform.rotation = Quaternion.Lerp(rig.transform.rotation, Quaternion.Euler(0.0f, angle/2, 0.0f), angleSpeed * Time.deltaTime);
+            rig.transform.rotation = Quaternion.Lerp(rig.transform.rotation, Quaternion.Euler(0.0f, angle/4, 0.0f), angleSpeed * Time.deltaTime);
 
             transform.Translate(dir * ySpeed * Time.deltaTime, Space.World);
         }
@@ -241,7 +241,7 @@ namespace Katniss
             for (var time = 0f; time < enemyRunTime; time += Time.deltaTime)
             {
                 enemy.gameObject.transform.position = Vector3.Lerp(targetPos, pos, time / 3f);
-                transform.position = Vector3.Lerp(pos, targetPos, time / 2f);
+                transform.position = Vector3.Lerp(pos, targetPos, time / 1f);
 
                 if (rig.transform.rotation != transform.rotation)
                     rig.transform.rotation = Quaternion.Lerp(rig.transform.rotation, transform.rotation, angleSpeed * Time.deltaTime);
@@ -252,6 +252,8 @@ namespace Katniss
                 {
                     isRunning = false;
 
+                    headMeshRenderer.material.color = Color.black;
+                    bodyMeshRenderer.material.color = Color.black;
                     animator.SetTrigger("Die");
                     enemy.Die();
                     break;
@@ -310,8 +312,17 @@ namespace Katniss
                 {
                     break;
                 }
+
+                if (bossEnemy.isDead)
+                {
+                    animator.SetTrigger("Dance");
+                    break;
+                }
+
                 pos = transform.position;
                 targetPos = bossEnemyRig.transform.position;
+                dir = targetPos - pos;
+                rig.transform.rotation = Quaternion.Euler(dir);
                 body.AddForce(targetPos - pos);
 
                 yield return null;

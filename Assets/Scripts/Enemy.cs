@@ -8,6 +8,7 @@ namespace Katniss
     public class Enemy : MonoBehaviour
     {
         [SerializeField] private bool isBoss = false;
+        public bool isDead = false;
         [SerializeField] private Rigidbody rig;
 
         public Vector3 pos;
@@ -28,7 +29,7 @@ namespace Katniss
 
             groundLayerMask = 1 << LayerMask.NameToLayer("Ground");
 
-            screenCenter = new Vector3(Camera.main.pixelWidth / 2, Camera.main.pixelHeight / 2);
+            screenCenter = new Vector3(Camera.main.pixelWidth / 2, Camera.main.pixelHeight / 3);
         }
 
         public void Run()
@@ -38,6 +39,8 @@ namespace Katniss
 
         public void Die()
         {
+            isDead = true;
+            //rig.GetComponent<Renderer>().material.color = Color.black;
             animator.SetTrigger("Die");
         }
 
@@ -56,26 +59,26 @@ namespace Katniss
                 yield return null;
             }
 
-            yield return new WaitForSeconds(0.5f);
             StartCoroutine(MoveBoss());
         }
 
         IEnumerator MoveBoss()
         {
             animator.SetBool("isFighting", true);
+            cameraRay = Camera.main.ScreenPointToRay(screenCenter);
 
-            for (float time = 0f; time < 5f; time += Time.deltaTime)
+            if (Physics.Raycast(cameraRay, out cameraHit, Mathf.Infinity, groundLayerMask))
             {
-                cameraRay = Camera.main.ScreenPointToRay(screenCenter);
-
-                if (Physics.Raycast(cameraRay, out cameraHit, Mathf.Infinity, groundLayerMask))
+                for (float time = 0f; time < 7f; time += Time.deltaTime)
                 {
+                    //if (stageManager.isBossDie == true) break;
+
                     pos = transform.position;
                     targetPos = cameraHit.point;
-                    transform.position = Vector3.Lerp(pos, targetPos, time / 5f);
-                }
+                    transform.position = Vector3.Lerp(pos, targetPos, time / 70f);
 
-                yield return null;
+                    yield return null;
+                }
             }
         }
     }

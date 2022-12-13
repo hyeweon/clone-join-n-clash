@@ -28,7 +28,7 @@ namespace Katniss
                 posX = Input.mousePosition.x;
             }
 
-            if (isEncounterBoss == true && isBossActivate == false)
+            if (isStageEnded == true && isBossActivate == false)
             {
                 isBossActivate = true;
                 boss.ActivateBoss();
